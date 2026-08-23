@@ -32,7 +32,10 @@ const Register = () => {
       await handleRegister(username, email, password)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Try a different email.')
+      const msg = typeof err.response?.data?.message === 'string' 
+        ? err.response.data.message 
+        : (err.response?.status === 500 ? 'Server error. Please configure MONGO_URI in Vercel environment variables.' : 'Registration failed. Please check connection.')
+      setError(msg)
     } finally {
       setIsSubmitting(false)
     }
