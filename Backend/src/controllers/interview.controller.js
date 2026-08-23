@@ -1,36 +1,69 @@
-const pdfParse = require("pdf-parse")
+const pdfParseModule = require("pdf-parse")
 const { generateInterviewReport, generateResumePdf } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
 
-
-
+async function extractTextFromPdfBuffer(buffer) {
+    if (!buffer) return ""
+    try {
+        if (typeof pdfParseModule === "function") {
+            const data = await pdfParseModule(buffer)
+            return data.text || ""
+        }
+        if (pdfParseModule?.PDFParse) {
+            const parser = new pdfParseModule.PDFParse({ data: buffer })
+            const data = await parser.getText()
+            return data.text || ""
+        }
+    } catch (err) {
+        console.error("Error parsing PDF resume:", err)
+    }
+    return ""
+}
 
 /**
  * @description Controller to generate interview report based on user self description, resume and job description.
  */
 async function generateInterViewReportController(req, res) {
+    try {
+        const { selfDescription, jobDescription } = req.body
 
-    const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
-    const { selfDescription, jobDescription } = req.body
+        if (!jobDescription) {
+            return res.status(400).json({ message: "Job description is required." })
+        }
 
-    const interViewReportByAi = await generateInterviewReport({
-        resume: resumeContent.text,
-        selfDescription,
-        jobDescription
-    })
+        if (!req.file && !selfDescription) {
+            return res.status(400).json({ message: "Either a resume or a self-description is required." })
+        }
 
-    const interviewReport = await interviewReportModel.create({
-        user: req.user.id,
-        resume: resumeContent.text,
-        selfDescription,
-        jobDescription,
-        ...interViewReportByAi
-    })
+        // Parse resume PDF if uploaded, otherwise fall back to empty string
+        let resumeText = ""
+        if (req.file) {
+            resumeText = await extractTextFromPdfBuffer(req.file.buffer)
+        }
 
-    res.status(201).json({
-        message: "Interview report generated successfully.",
-        interviewReport
-    })
+
+        const interViewReportByAi = await generateInterviewReport({
+            resume: resumeText,
+            selfDescription: selfDescription || "",
+            jobDescription
+        })
+
+        const interviewReport = await interviewReportModel.create({
+            user: req.user.id,
+            resume: resumeText,
+            selfDescription: selfDescription || "",
+            jobDescription,
+            ...interViewReportByAi
+        })
+
+        res.status(201).json({
+            message: "Interview report generated successfully.",
+            interviewReport
+        })
+    } catch (err) {
+        console.error("generateInterViewReportController error:", err)
+        res.status(500).json({ message: "Failed to generate interview report.", error: err.message })
+    }
 
 }
 

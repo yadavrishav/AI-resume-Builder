@@ -1,26 +1,56 @@
-import { createBrowserRouter } from "react-router";
-import Login from "./features/auth/pages/Login";
-import Register from "./features/auth/pages/Register";
-import Protected from "./features/auth/components/Protected";
-import Home from "./features/interview/pages/Home";
-import Interview from "./features/interview/pages/Interview";
-
+import React from 'react'
+import { createBrowserRouter } from 'react-router'
+import Protected from './components/Protected'
+import AuthLayout from './layouts/AuthLayout'
+import MainLayout from './layouts/MainLayout'
+import Home from './pages/Home'
+import Interview from './pages/Interview'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import ReportsHistory from './pages/ReportsHistory'
 
 export const router = createBrowserRouter([
-    {
-        path: "/login",
-        element: <Login />
-    },
-    {
-        path: "/register",
-        element: <Register />
-    },
-    {
-        path: "/",
-        element: <Protected><Home /></Protected>
-    },
-    {
-        path:"/interview/:interviewId",
-        element: <Protected><Interview /></Protected>
-    }
+  {
+    path: '/',
+    element: <MainLayout />,
+    children: [
+      {
+        index: true,
+        element: (
+          <Protected>
+            <Home />
+          </Protected>
+        ),
+      },
+      {
+        path: 'interview/:interviewId',
+        element: (
+          <Protected>
+            <Interview />
+          </Protected>
+        ),
+      },
+      {
+        path: 'history',
+        element: (
+          <Protected>
+            <ReportsHistory />
+          </Protected>
+        ),
+      },
+    ],
+  },
+  {
+    element: <AuthLayout />,
+    children: [
+      {
+        path: 'login',
+        element: <Login />,
+      },
+      {
+        path: 'register',
+        element: <Register />,
+      },
+    ],
+  },
 ])

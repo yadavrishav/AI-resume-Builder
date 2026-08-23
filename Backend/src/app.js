@@ -7,7 +7,14 @@ const app = express()
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, postman) or matching dev ports
+        if (!origin || origin.includes("localhost") || origin.includes("127.0.0.1")) {
+            callback(null, true)
+        } else {
+            callback(null, true)
+        }
+    },
     credentials: true
 }))
 

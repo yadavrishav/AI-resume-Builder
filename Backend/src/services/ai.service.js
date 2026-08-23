@@ -3,9 +3,14 @@ const { z } = require("zod")
 const { zodToJsonSchema } = require("zod-to-json-schema")
 const puppeteer = require("puppeteer")
 
-const ai = new GoogleGenAI({
-    apiKey: process.env.GOOGLE_GENAI_API_KEY
-})
+function getAiClient() {
+    const apiKey = process.env.GOOGLE_GENAI_API_KEY
+    if (!apiKey) {
+        throw new Error("GOOGLE_GENAI_API_KEY environment variable is missing in Backend/.env.")
+    }
+    return new GoogleGenAI({ apiKey })
+}
+
 
 
 const interviewReportSchema = z.object({
@@ -34,15 +39,14 @@ const interviewReportSchema = z.object({
 
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
 
-
     const prompt = `Generate an interview report for a candidate with the following details:
                         Resume: ${resume}
                         Self Description: ${selfDescription}
                         Job Description: ${jobDescription}
 `
 
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+    const response = await getAiClient().models.generateContent({
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -52,13 +56,24 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
 
     return JSON.parse(response.text)
 
-
 }
 
 
 
 async function generatePdfFromHtml(htmlContent) {
-    const browser = await puppeteer.launch()
+    let browser
+    const launchArgs = [ "--no-sandbox", "--disable-setuid-sandbox" ]
+
+    try {
+        browser = await puppeteer.launch({ args: launchArgs })
+    } catch (err) {
+        try {
+            browser = await puppeteer.launch({ channel: "chrome", args: launchArgs })
+        } catch (err2) {
+            browser = await puppeteer.launch({ channel: "msedge", args: launchArgs })
+        }
+    }
+
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" })
 
@@ -95,8 +110,8 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                         The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
                     `
 
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+    const response = await getAiClient().models.generateContent({
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -113,4 +128,4 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
 
 }
 
-module.exports = { generateInterviewReport, generateResumePdf }
+module.exports = { generateInterviewReport, generateResumePdf }

@@ -3,14 +3,13 @@ const mongoose = require("mongoose")
 
 
 async function connectToDB() {
-
     try {
-        await mongoose.connect(process.env.MONGO_URI)
-
+        const uri = process.env.MONGO_URI || "mongodb://localhost:27017/interview-ai-yt"
+        await mongoose.connect(uri)
         console.log("Connected to Database")
     }
     catch (err) {
-        console.log(err)
+        console.error("Database connection error:", err)
     }
 }
 
