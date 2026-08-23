@@ -7,7 +7,7 @@ async function connectToDB() {
         return
     }
     try {
-        const uri = process.env.MONGO_URI || "mongodb://localhost:27017/interview-ai-yt"
+        const uri = process.env.MONGO_URI || "mongodb+srv://rishavyadav6997_db_user:Jp5PYTZaTZAPrCCG@cluster0.gnsa7s5.mongodb.net/interview-ai-yt?retryWrites=true&w=majority&appName=Cluster0"
         await mongoose.connect(uri)
         console.log("Connected to Database")
     }

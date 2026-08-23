@@ -18,3 +18,5 @@ Backend/chrome/
 .DS_Store
 .vscode/
 .idea/
+
+.vercel
