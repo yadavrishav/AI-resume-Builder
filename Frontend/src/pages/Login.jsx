@@ -26,10 +26,8 @@ const Login = () => {
       await handleLogin(email, password)
       navigate('/')
     } catch (err) {
-      const msg = typeof err.response?.data?.message === 'string' 
-        ? err.response.data.message 
-        : (err.response?.status === 500 ? 'Server error. Please configure MONGO_URI in Vercel environment variables.' : 'Login failed. Please check your credentials or server connection.')
-      setError(msg)
+      const serverMsg = err.response?.data?.message
+      setError(typeof serverMsg === 'string' ? serverMsg : 'Login failed. Please check your credentials or server connection.')
     } finally {
       setIsSubmitting(false)
     }
